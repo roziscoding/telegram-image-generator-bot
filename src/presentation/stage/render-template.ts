@@ -1,18 +1,16 @@
 import ejs from 'ejs'
-import { Markup } from 'telegraf'
 import { chromium } from 'playwright'
 
-import { confirm } from './utils'
-import { TemplateService } from '../../services/TemplateService'
+import select from './utils/select'
+import confirm from './utils/confirm'
 import { Template } from '../../domain/Template'
+import { TemplateService } from '../../services/TemplateService'
 
 const WizardScene = require('telegraf/scenes/wizard')
 
 type FinalState = {
   template: Template
-  topic: string
-  date: string
-  location: string
+  eventData: Record<string, string>
 }
 
 export function factory (templateService: TemplateService) {
@@ -30,91 +28,82 @@ export function factory (templateService: TemplateService) {
         return ctx.scene.leave()
       }
 
-      const templateButtons = templates.map(({ name }, index) => [ `${index}: ${name}` ])
-      const markup = Markup
-        .keyboard(templateButtons)
-        .resize()
-        .extra()
-
-      ctx.reply('Done. Please choose a template to proceed. You can use /cancel to abort, or /new to create a new template.', markup)
-      return ctx.wizard.next()
+      const templateOptions = templates.map((template) => ({ name: template.name, value: template }))
+      const message = 'Please choose a template to render. You can use /cancel to abort, or /new to create a new template.'
+      return select.promptForOption(message, templateOptions, ctx)
     },
+    select.extractSelection('template', ({ value: template }) => {
+      const fields = template.fields.join(', ')
+      return `OK, you selected ${template.name}. Now, please, send me the following fields, separated by double commas (,,): ${fields}`
+    }),
     async (ctx: any) => {
-      const usage = () => ctx.reply('Please, use the buttons to reply to this, or /cancel to abort')
+      const rawFields = ctx.message?.text
 
-      const rawIndex = ctx.message.text.split(':')[ 0 ]
-      if (!rawIndex || isNaN(rawIndex)) return usage()
+      if (!rawFields) return ctx.reply('Please, send me the field values separated by double commas (,,)')
 
-      const index = parseInt(rawIndex, 10)
+      const values: string[] = rawFields
+        .split(',,')
+        .map((field: string) => field.trim())
 
-      const template = ctx.wizard.state.templates[ index ]
+      const fields: string[] = ctx.wizard.state.template.fields
 
-      if (!template) return usage()
+      const fieldPlusValues = fields.map((fieldName, index) => [ fieldName, values[ index ] ])
 
-      ctx.wizard.state.template = template
-      await ctx.reply(`OK, you selected ${template.name}. Now, please, give me the event topic.`, Markup.removeKeyboard().extra())
-      ctx.wizard.next()
-    },
-    async (ctx: any) => {
-      if (!ctx.message.text) return ctx.reply('Hm... That doesn\'t seem like an event topic. Let\'s try that againg, shall we?')
+      const fieldLines = fieldPlusValues.map(([ field, value ]) => `${field}: ${value}`)
 
-      ctx.wizard.state.topic = ctx.message.text
+      ctx.wizard.state.eventData = Object.fromEntries(fieldPlusValues)
 
-      await ctx.reply('Nice! What about the date? (This will be rendered exactly as you type it)')
-      ctx.wizard.next()
-    },
-    async (ctx: any) => {
-      if (!ctx.message.text) return ctx.reply('I don\'t think I got that right. Please, send me the event date.')
+      const { template } = ctx.wizard.state
 
-      ctx.wizard.state.date = ctx.message.text
-
-      await ctx.reply('Great! Now, what about the location?')
-      ctx.wizard.next()
-    },
-    async (ctx: any) => {
-      if (!ctx.message.text) return ctx.reply('That\'s not a valid location...')
-
-      ctx.wizard.state.location = ctx.message.text
-
-      const { template, topic, date, location } = ctx.wizard.state
-
-      const text = [
+      const message = [
         'Wonderful\\! So, this is the data you\'ve given me for this event:',
         '',
         `Template: ${template.name}`,
-        `Topic: ${topic}`,
-        `Date: ${date}`,
-        `Location: ${location}`,
+        ...fieldLines,
         '',
         'Is this correct?'
       ].join('\n')
 
-      return confirm.promptConfirmation(text)(ctx)
+      return confirm.promptConfirmation(message)(ctx)
     },
-    confirm.validateConfirm(async (ctx) => {
+    confirm.onConfirmmed(async (ctx) => {
       await ctx.reply('Hold on as I generate your image.')
-      await ctx.replyWithChatAction('upload_photo')
+      await ctx.replyWithChatAction('upload_document')
 
       const state: FinalState = ctx.wizard.state
 
-      const { template, topic, date, location } = state
+      const { template, eventData } = state
 
-      const result = ejs.render(template.template, { topic, date, location })
+      let renderedTemplate
 
-      const browser = await chromium.launch({
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox'
-        ]
-      })
+      try {
+        renderedTemplate = ejs.render(template.template, { ...eventData })
+      } catch (err) {
+        await ctx.reply(`Error while rendering template: ${err.message}`)
+        return ctx.scene.leave()
+      }
 
-      const page = await browser.newPage()
-      await page.setContent(result)
-      await page.setViewportSize(template.dimensions)
-      const file = await page.screenshot({ type: 'png' })
-      await browser.close()
+      let file
 
-      await ctx.replyWithPhoto({ source: file })
+      try {
+        const browser = await chromium.launch({
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+          ]
+        })
+
+        const page = await browser.newPage()
+        await page.setContent(renderedTemplate)
+        await page.setViewportSize(template.dimensions)
+        file = await page.screenshot({ type: 'png' })
+        await browser.close()
+      } catch (err) {
+        await ctx.reply(`Error generating image: ${err.message}`)
+        return ctx.scene.leave()
+      }
+
+      await ctx.replyWithDocument({ source: file, filename: `${template.name}.png` })
 
       ctx.scene.leave()
     })

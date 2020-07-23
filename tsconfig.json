@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "incremental": true,
+    "lib": ["ES2019.Object", "DOM"],
     "target": "es6",
     "module": "commonjs",
     "sourceMap": true,

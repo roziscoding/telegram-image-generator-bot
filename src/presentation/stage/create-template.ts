@@ -1,17 +1,13 @@
-import { MessageEntity } from 'telegraf/typings/telegram-types'
-import { TemplateService } from '../../services/TemplateService'
 import { Markup } from 'telegraf'
+
+import confirm from './utils/confirm'
+import { getTemplateFromContext } from './utils/template'
+import { TemplateService } from '../../services/TemplateService'
+import { TelegramFileService } from '../../services/TelegramFileService'
 
 const WizardScene = require('telegraf/scenes/wizard')
 
-const BUTTON_TEXTS = {
-  confirm: {
-    yes: 'Yes 👍',
-    no: 'No 👎'
-  }
-}
-
-export function factory (templateService: TemplateService) {
+export function factory (templateService: TemplateService, telegramFileService: TelegramFileService) {
   return new WizardScene(
     'create-template',
     async (ctx: any) => {
@@ -47,63 +43,50 @@ export function factory (templateService: TemplateService) {
       ctx.wizard.next()
     },
     async (ctx: any) => {
-      const usage = () => ctx.reply('Let\'s try that again. You need to send your template as a pre-formatted code block, surrounded with three backticks like so: ```template```')
+      const usage = () => ctx.reply('Let\'s try that again. You need to send your template as a pre-formatted code block or upload it as a file')
 
-      const entities: MessageEntity[] = ctx.message.entities ?? []
-      const templateEntity = entities.find(({ type }) => type === 'pre')
-      const rawText: string | undefined = ctx.message.text
+      const template = await getTemplateFromContext(ctx, telegramFileService)
 
-      if (!templateEntity || !rawText) {
-        return usage()
-      }
+      if (!template) return usage()
 
-      const templateText = rawText.substr(templateEntity.offset, templateEntity.length)
+      ctx.wizard.state.template = template
+      await ctx.reply('Got it! Now, please send me the names of the fields your template uses, separated by commas.')
+      ctx.wizard.next()
+    },
+    async (ctx: any) => {
+      if (!ctx.message?.text) return ctx.reply('Please, send me a text message with the field names separated by comas')
 
-      ctx.wizard.state.template = templateText
+      const fields = ctx.message.text
+        .split(',')
+        .map((s: string) => s.trim())
 
+      ctx.wizard.state.fields = fields
       const { name, dimensions, template } = ctx.wizard.state
 
       const text = [
-        'Alreight, that\'s all I need from you\\. Let\'s review the data you just entered, to make sure it\'s correct\n',
+        'Alreight, that\'s all I need from you. Let\'s review the data you just entered, to make sure it\'s correct\n',
         `**Name**: ${name}`,
         `**Width**: ${dimensions.width}`,
         `**Height**: ${dimensions.height}`,
-        `**Template**: \n\`\`\`${template}\`\`\``,
+        `**Fields**: ${fields.join(', ')}`,
+        `**Template**: \n\`\`\`${template.origin === 'text' ? template.template : '<File>'}\`\`\``,
         '',
         'Is this correct?'
       ].join('\n')
 
-      await ctx.reply(text, Markup
-        .keyboard([
-          [ BUTTON_TEXTS.confirm.yes ],
-          [ BUTTON_TEXTS.confirm.no ]
-        ])
-        .resize()
-        .extra({ parse_mode: 'MarkdownV2' })
-      )
-
-      ctx.wizard.next()
+      return confirm.promptConfirmation(text)(ctx)
     },
-    async (ctx: any) => {
-      if (!(Object.values(BUTTON_TEXTS.confirm).includes(ctx.message.text))) {
-        return ctx.reply('Please use the buttons to reply.')
-      }
-
-      if (ctx.message.text === 'No 👎') {
-        await ctx.reply('OK, nervermind then :)', Markup.removeKeyboard().extra())
-        return ctx.scene.leave()
-      }
-
+    confirm.onConfirmmed(async (ctx: any) => {
       await ctx.reply('Ok, hold on, I\'m creating the template', Markup.removeKeyboard().extra())
       await ctx.replyWithChatAction('typing')
 
-      const { name, dimensions, template } = ctx.wizard.state
+      const { name, dimensions, template: { template }, fields } = ctx.wizard.state
 
-      await templateService.create({ name, dimensions, template }, ctx.message.from.id)
+      await templateService.create({ name, dimensions, template, fields }, ctx.message.from.id)
 
       await ctx.reply('Ok, template created!')
       return ctx.scene.leave()
-    }
+    })
   )
 }
 

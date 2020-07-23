@@ -14,10 +14,10 @@ export function factory (templateService: TemplateService) {
 
       if (!templates.length) return ctx.reply('You currently have no templates. To create a new one, use the /new command')
 
-      const templateLines = templates.map(({ name, dimensions }) => [
+      const templateLines = templates.map(({ name, dimensions, fields }) => [
         `Name: ${name}`,
-        `With: ${dimensions.width}`,
-        `Height: ${dimensions.height}`,
+        `Dimensions: ${dimensions.width}x${dimensions.height}`,
+        `Fields: ${fields.join(', ')}`,
         '-------'
       ].join('\n'))
 

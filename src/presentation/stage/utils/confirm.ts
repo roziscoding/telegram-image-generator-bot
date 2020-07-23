@@ -10,7 +10,7 @@ const BUTTON_TEXTS = {
 const promptConfirmation =
   (message: string) =>
     async (ctx: any) =>
-      ctx.reply(message, Markup
+      ctx.reply(message.replace(/\./g, '\\.').replace(/-/g, '\\-'), Markup
         .keyboard([
           [ BUTTON_TEXTS.confirm.yes ],
           [ BUTTON_TEXTS.confirm.no ]
@@ -43,8 +43,8 @@ const validateConfirm =
       return onConfirm(ctx)
     }
 
-export const confirm = {
+export default {
   promptConfirmation,
-  validateConfirm,
+  onConfirmmed: validateConfirm,
   basicDenyAction
 }

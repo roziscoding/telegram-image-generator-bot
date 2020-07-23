@@ -9,6 +9,7 @@ export type Template = {
     height: number
   }
   template: string
+  fields: string[]
 }
 
 export type UnsavedTemplate = Omit<Template, '_id' | 'owners'>

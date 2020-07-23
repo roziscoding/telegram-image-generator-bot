@@ -1,0 +1,3 @@
+apps:
+  - name: telegram-image-generator-bot
+    script: ./dist/index.js

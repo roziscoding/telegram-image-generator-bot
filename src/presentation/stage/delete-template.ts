@@ -1,6 +1,6 @@
 import { Markup } from 'telegraf'
 
-import { confirm } from './utils'
+import confirm from './utils/confirm'
 import { TemplateService } from '../../services/TemplateService'
 
 const WizardScene = require('telegraf/scenes/wizard')
@@ -43,7 +43,7 @@ export function factory (templateService: TemplateService) {
       ctx.wizard.state.template = template
       return confirm.promptConfirmation(`OK, you selected ${template.name}\\. What would you like the event name to be?`)(ctx)
     },
-    confirm.validateConfirm(async (ctx: any) => {
+    confirm.onConfirmmed(async (ctx: any) => {
       await ctx.replyWithChatAction('typing')
 
       console.log(ctx.wizard.state.template)
