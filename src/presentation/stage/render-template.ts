@@ -1,5 +1,5 @@
 import ejs from 'ejs'
-import { chromium } from 'playwright'
+import { chromium } from 'playwright-chromium'
 
 import select from './utils/select'
 import confirm from './utils/confirm'
