@@ -21,7 +21,7 @@ export const config: AppConfig = {
     dbName: env.get('DATABASE_NAME', 'image-generator-bot')
   },
   server: {
-    port: env.get.int([ 'PORT', 'SERVER_PORT' ], 3000),
+    port: env.get.int(['PORT', 'SERVER_PORT'], 3000),
     webhookUrl: env.get('TELEGRAM_WEBHOOK_URL', undefined)
   }
 }

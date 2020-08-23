@@ -3,11 +3,9 @@ import { UnsavedTemplate, Template } from '../domain/Template'
 import { ObjectId } from 'mongodb'
 
 export class TemplateService {
-  constructor (
-    private readonly repository: TemplateRepository
-  ) { }
+  constructor(private readonly repository: TemplateRepository) {}
 
-  async create (templateData: UnsavedTemplate, userId: number) {
+  async create(templateData: UnsavedTemplate, userId: number) {
     const id = new ObjectId()
 
     const template: Template = {
@@ -21,15 +19,15 @@ export class TemplateService {
     return template
   }
 
-  async getByUserId (userId: number) {
+  async getByUserId(userId: number) {
     return this.repository.getForUser(userId)
   }
 
-  async update (template: Template) {
+  async update(template: Template) {
     return this.repository.save(template)
   }
 
-  async remove (id: ObjectId) {
+  async remove(id: ObjectId) {
     return this.repository.deleteById(id)
   }
 }

@@ -12,7 +12,10 @@ const getTemplateFromText = (text: string, entities: MessageEntity[]) => {
   return text.substr(templateEntity.offset, templateEntity.length)
 }
 
-export const getTemplateFromContext = async (ctx: TelegrafContext, telegramFileService?: TelegramFileService) => {
+export const getTemplateFromContext = async (
+  ctx: TelegrafContext,
+  telegramFileService?: TelegramFileService
+) => {
   console.log(ctx.message?.text)
   console.log(ctx.message?.document)
 

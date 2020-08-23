@@ -3,7 +3,7 @@ import ngrok from 'ngrok'
 import app from './app'
 import { AppConfig } from '../config'
 
-async function getWebhookUrl (config: AppConfig) {
+async function getWebhookUrl(config: AppConfig) {
   if (config.server.webhookUrl) {
     return `${config.server.webhookUrl}/${config.telegram.token}`
   }
@@ -12,7 +12,7 @@ async function getWebhookUrl (config: AppConfig) {
   return `${ngrokUrl}/${config.telegram.token}`
 }
 
-export async function start (config: AppConfig) {
+export async function start(config: AppConfig) {
   const bot = await app.factory(config)
 
   const webhookUrl = await getWebhookUrl(config)

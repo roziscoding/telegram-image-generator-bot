@@ -7,7 +7,10 @@ import { TelegramFileService } from '../../services/TelegramFileService'
 
 const WizardScene = require('telegraf/scenes/wizard')
 
-export function factory (templateService: TemplateService, telegramFileService: TelegramFileService) {
+export function factory(
+  templateService: TemplateService,
+  telegramFileService: TelegramFileService
+) {
   return new WizardScene(
     'create-template',
     async (ctx: any) => {
@@ -18,12 +21,16 @@ export function factory (templateService: TemplateService, telegramFileService: 
       const name = ctx.message.text
 
       if (!name) {
-        return ctx.reply('It seems like that is not a title... Please, send the desired title, or use /cancel to give up on creating the template')
+        return ctx.reply(
+          'It seems like that is not a title... Please, send the desired title, or use /cancel to give up on creating the template'
+        )
       }
 
       ctx.wizard.state.name = name
 
-      await ctx.reply('Okay, now send me the template dimenions using the format <width>x<height>. For example: 2560x1920')
+      await ctx.reply(
+        'Okay, now send me the template dimenions using the format <width>x<height>. For example: 2560x1920'
+      )
       ctx.wizard.next()
     },
     async (ctx: any) => {
@@ -31,40 +38,48 @@ export function factory (templateService: TemplateService, telegramFileService: 
       const rawDimensions = ctx.message.text
 
       if (!rawDimensions || !dimensionsRegex.test(rawDimensions)) {
-        return ctx.reply('Well... I didn\'t quite get that. Please, try again using the format <width>x<height> like 2560x1920')
+        return ctx.reply(
+          "Well... I didn't quite get that. Please, try again using the format <width>x<height> like 2560x1920"
+        )
       }
 
-      const [ rawWidth, rawHeight ] = rawDimensions.split('x')
+      const [rawWidth, rawHeight] = rawDimensions.split('x')
       const width = parseInt(rawWidth, 10)
       const height = parseInt(rawHeight, 10)
 
       ctx.wizard.state.dimensions = { width, height }
-      await ctx.reply('Got it. Now, please, send the template as pre-formatted code block (surrounded with three backticks like so: ```template```)')
+      await ctx.reply(
+        'Got it. Now, please, send the template as pre-formatted code block (surrounded with three backticks like so: ```template```)'
+      )
       ctx.wizard.next()
     },
     async (ctx: any) => {
-      const usage = () => ctx.reply('Let\'s try that again. You need to send your template as a pre-formatted code block or upload it as a file')
+      const usage = () =>
+        ctx.reply(
+          "Let's try that again. You need to send your template as a pre-formatted code block or upload it as a file"
+        )
 
       const template = await getTemplateFromContext(ctx, telegramFileService)
 
       if (!template) return usage()
 
       ctx.wizard.state.template = template
-      await ctx.reply('Got it! Now, please send me the names of the fields your template uses, separated by commas.')
+      await ctx.reply(
+        'Got it! Now, please send me the names of the fields your template uses, separated by commas.'
+      )
       ctx.wizard.next()
     },
     async (ctx: any) => {
-      if (!ctx.message?.text) return ctx.reply('Please, send me a text message with the field names separated by comas')
+      if (!ctx.message?.text)
+        return ctx.reply('Please, send me a text message with the field names separated by comas')
 
-      const fields = ctx.message.text
-        .split(',')
-        .map((s: string) => s.trim())
+      const fields = ctx.message.text.split(',').map((s: string) => s.trim())
 
       ctx.wizard.state.fields = fields
       const { name, dimensions, template } = ctx.wizard.state
 
       const text = [
-        'Alreight, that\'s all I need from you. Let\'s review the data you just entered, to make sure it\'s correct\n',
+        "Alreight, that's all I need from you. Let's review the data you just entered, to make sure it's correct\n",
         `**Name**: ${name}`,
         `**Width**: ${dimensions.width}`,
         `**Height**: ${dimensions.height}`,
@@ -77,10 +92,15 @@ export function factory (templateService: TemplateService, telegramFileService: 
       return confirm.promptConfirmation(text)(ctx)
     },
     confirm.onConfirmmed(async (ctx: any) => {
-      await ctx.reply('Ok, hold on, I\'m creating the template', Markup.removeKeyboard().extra())
+      await ctx.reply("Ok, hold on, I'm creating the template", Markup.removeKeyboard().extra())
       await ctx.replyWithChatAction('typing')
 
-      const { name, dimensions, template: { template }, fields } = ctx.wizard.state
+      const {
+        name,
+        dimensions,
+        template: { template },
+        fields
+      } = ctx.wizard.state
 
       await templateService.create({ name, dimensions, template, fields }, ctx.message.from.id)
 

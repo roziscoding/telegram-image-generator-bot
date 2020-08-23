@@ -6,12 +6,9 @@ type Option = {
 }
 
 export const promptForOption = async (message: string, options: Option[], ctx: any) => {
-  const keyboardButtons = options.map(({ name }, index) => [ `${index}: ${name}` ])
+  const keyboardButtons = options.map(({ name }, index) => [`${index}: ${name}`])
 
-  const markup = Markup
-    .keyboard(keyboardButtons)
-    .resize()
-    .extra()
+  const markup = Markup.keyboard(keyboardButtons).resize().extra()
 
   await ctx.reply(message, markup)
 
@@ -19,17 +16,22 @@ export const promptForOption = async (message: string, options: Option[], ctx: a
   return ctx.wizard.next()
 }
 
-export const extractSelection = (field: string, confirmMessage: (option: Option) => string) => async (ctx: any) => {
-  const { select: { options } } = ctx.wizard.state
+export const extractSelection = (
+  field: string,
+  confirmMessage: (option: Option) => string
+) => async (ctx: any) => {
+  const {
+    select: { options }
+  } = ctx.wizard.state
 
   const usage = () => ctx.reply('Please, use the buttons to reply to this, or /cancel to abort')
 
-  const rawIndex = ctx.message?.text?.split(':')[ 0 ]
+  const rawIndex = ctx.message?.text?.split(':')[0]
   if (!rawIndex || isNaN(rawIndex)) return usage()
 
   const index = parseInt(rawIndex, 10)
 
-  const option = options[ index ]
+  const option = options[index]
 
   if (!option) return usage()
 

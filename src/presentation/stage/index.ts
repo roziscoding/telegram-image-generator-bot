@@ -7,7 +7,10 @@ import deleteTemplate from './delete-template'
 import { TemplateService } from '../../services/TemplateService'
 import { TelegramFileService } from '../../services/TelegramFileService'
 
-export function factory (templateService: TemplateService, telegramFileService: TelegramFileService) {
+export function factory(
+  templateService: TemplateService,
+  telegramFileService: TelegramFileService
+) {
   const stage = new Stage([
     createTemplate.factory(templateService, telegramFileService),
     renderTemplate.factory(templateService),
@@ -16,7 +19,7 @@ export function factory (templateService: TemplateService, telegramFileService: 
     shareTemplate.factory(templateService)
   ])
 
-  stage.command('cancel', async (ctx) => {
+  stage.command('cancel', async ctx => {
     await ctx.reply('OK, nevermind then', Markup.removeKeyboard().extra())
     return ctx.scene.leave()
   })

@@ -13,7 +13,7 @@ type FinalState = {
   eventData: Record<string, string>
 }
 
-export function factory (templateService: TemplateService) {
+export function factory(templateService: TemplateService) {
   return new WizardScene(
     'render-template',
     async (ctx: any) => {
@@ -28,8 +28,9 @@ export function factory (templateService: TemplateService) {
         return ctx.scene.leave()
       }
 
-      const templateOptions = templates.map((template) => ({ name: template.name, value: template }))
-      const message = 'Please choose a template to render. You can use /cancel to abort, or /new to create a new template.'
+      const templateOptions = templates.map(template => ({ name: template.name, value: template }))
+      const message =
+        'Please choose a template to render. You can use /cancel to abort, or /new to create a new template.'
       return select.promptForOption(message, templateOptions, ctx)
     },
     select.extractSelection('template', ({ value: template }) => {
@@ -39,24 +40,23 @@ export function factory (templateService: TemplateService) {
     async (ctx: any) => {
       const rawFields = ctx.message?.text
 
-      if (!rawFields) return ctx.reply('Please, send me the field values separated by double commas (,,)')
+      if (!rawFields)
+        return ctx.reply('Please, send me the field values separated by double commas (,,)')
 
-      const values: string[] = rawFields
-        .split(',,')
-        .map((field: string) => field.trim())
+      const values: string[] = rawFields.split(',,').map((field: string) => field.trim())
 
       const fields: string[] = ctx.wizard.state.template.fields
 
-      const fieldPlusValues = fields.map((fieldName, index) => [ fieldName, values[ index ] ])
+      const fieldPlusValues = fields.map((fieldName, index) => [fieldName, values[index]])
 
-      const fieldLines = fieldPlusValues.map(([ field, value ]) => `${field}: ${value}`)
+      const fieldLines = fieldPlusValues.map(([field, value]) => `${field}: ${value}`)
 
       ctx.wizard.state.eventData = Object.fromEntries(fieldPlusValues)
 
       const { template } = ctx.wizard.state
 
       const message = [
-        'Wonderful\\! So, this is the data you\'ve given me for this event:',
+        "Wonderful\\! So, this is the data you've given me for this event:",
         '',
         `Template: ${template.name}`,
         ...fieldLines,
@@ -66,7 +66,7 @@ export function factory (templateService: TemplateService) {
 
       return confirm.promptConfirmation(message)(ctx)
     },
-    confirm.onConfirmmed(async (ctx) => {
+    confirm.onConfirmmed(async ctx => {
       await ctx.reply('Hold on as I generate your image.')
       await ctx.replyWithChatAction('upload_document')
 
@@ -87,10 +87,7 @@ export function factory (templateService: TemplateService) {
 
       try {
         const browser = await chromium.launch({
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox'
-          ]
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
 
         const page = await browser.newPage()

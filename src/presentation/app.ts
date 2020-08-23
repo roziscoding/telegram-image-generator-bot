@@ -10,7 +10,7 @@ import { BotCommand } from 'telegraf/typings/telegram-types'
 import { TelegramFileClient } from '../data/clients/TelegramFileClient'
 import { TelegramFileService } from '../services/TelegramFileService'
 
-export async function factory (config: AppConfig) {
+export async function factory(config: AppConfig) {
   const connection = await createConnection(config.database)
 
   const templateRepository = new TemplateRepository(connection)
@@ -34,7 +34,8 @@ export async function factory (config: AppConfig) {
     bot.command(command.name, command.run)
   }
 
-  const myCommands: BotCommand[] = commands.filter(command => !!command.help)
+  const myCommands: BotCommand[] = commands
+    .filter(command => !!command.help)
     .map(command => ({ command: command.name, description: command.help || '' }))
 
   await bot.telegram.setMyCommands(myCommands)

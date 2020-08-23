@@ -4,7 +4,7 @@ import confirm from './utils/confirm'
 import { TemplateService } from '../../services/TemplateService'
 
 const WizardScene = require('telegraf/scenes/wizard')
-export function factory (templateService: TemplateService) {
+export function factory(templateService: TemplateService) {
   return new WizardScene(
     'delete-template',
     async (ctx: any) => {
@@ -19,29 +19,31 @@ export function factory (templateService: TemplateService) {
         return ctx.scene.leave()
       }
 
-      const templateButtons = templates.map(({ name }, index) => [ `${index}: ${name}` ])
-      const markup = Markup
-        .keyboard(templateButtons)
-        .resize()
-        .extra()
+      const templateButtons = templates.map(({ name }, index) => [`${index}: ${name}`])
+      const markup = Markup.keyboard(templateButtons).resize().extra()
 
-      ctx.reply('Please choose a template to proceed\\. You can use /cancel to abort, or /new to create a new template\\.', markup)
+      ctx.reply(
+        'Please choose a template to proceed\\. You can use /cancel to abort, or /new to create a new template\\.',
+        markup
+      )
       return ctx.wizard.next()
     },
     async (ctx: any) => {
       const usage = () => ctx.reply('Please, use the buttons to reply to this, or /cancel to abort')
 
-      const rawIndex = ctx.message.text.split(':')[ 0 ]
+      const rawIndex = ctx.message.text.split(':')[0]
       if (!rawIndex || isNaN(rawIndex)) return usage()
 
       const index = parseInt(rawIndex, 10)
 
-      const template = ctx.wizard.state.templates[ index ]
+      const template = ctx.wizard.state.templates[index]
 
       if (!template) return usage()
 
       ctx.wizard.state.template = template
-      return confirm.promptConfirmation(`OK, you selected ${template.name}\\. What would you like the event name to be?`)(ctx)
+      return confirm.promptConfirmation(
+        `OK, you selected ${template.name}\\. What would you like the event name to be?`
+      )(ctx)
     },
     confirm.onConfirmmed(async (ctx: any) => {
       await ctx.replyWithChatAction('typing')
