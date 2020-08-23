@@ -268,3 +268,4 @@ $RECYCLE.BIN/
 tsconfig.tsbuildinfo
 dist
 *.log
+*.envrc*
