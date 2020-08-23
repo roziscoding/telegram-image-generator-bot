@@ -12,6 +12,7 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   rules: {
     'no-unused-vars': 'off',
-    'no-useless-constructor': 'off'
+    'no-useless-constructor': 'off',
+    'no-console': 'error'
   }
 }

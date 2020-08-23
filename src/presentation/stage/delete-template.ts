@@ -48,7 +48,6 @@ export function factory(templateService: TemplateService) {
     confirm.onConfirmmed(async (ctx: any) => {
       await ctx.replyWithChatAction('typing')
 
-      console.log(ctx.wizard.state.template)
       await templateService.remove(ctx.wizard.state.template._id)
 
       await ctx.reply('Ok, template deleted!')

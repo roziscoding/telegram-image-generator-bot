@@ -40,6 +40,7 @@ export async function factory(config: AppConfig) {
 
   await bot.telegram.setMyCommands(myCommands)
 
+  // eslint-disable-next-line no-console
   console.log(`Commands loaded: ${commands.map(({ name }) => name).join(', ')}`)
 
   return bot

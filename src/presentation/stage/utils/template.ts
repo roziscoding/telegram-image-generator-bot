@@ -16,9 +16,6 @@ export const getTemplateFromContext = async (
   ctx: TelegrafContext,
   telegramFileService?: TelegramFileService
 ) => {
-  console.log(ctx.message?.text)
-  console.log(ctx.message?.document)
-
   if (ctx.message?.text) {
     const template = getTemplateFromText(ctx.message.text, ctx.message.entities ?? [])
     return { template, origin: 'text' }

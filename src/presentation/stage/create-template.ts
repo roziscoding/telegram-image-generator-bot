@@ -49,7 +49,7 @@ export function factory(
 
       ctx.wizard.state.dimensions = { width, height }
       await ctx.reply(
-        'Got it. Now, please, send the template as pre-formatted code block (surrounded with three backticks like so: ```template```)'
+        'Got it. Now, please, send the template as a file or a pre-formatted code block (surrounded with three backticks like so: ```template```)'
       )
       ctx.wizard.next()
     },
