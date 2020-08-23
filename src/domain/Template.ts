@@ -8,6 +8,7 @@ export type Template = {
     width: number
     height: number
   }
+  engine: string
   template: string
   fields: string[]
 }

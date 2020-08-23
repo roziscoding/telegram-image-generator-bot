@@ -1,6 +1,6 @@
 import { Markup } from 'telegraf'
 
-type Option = {
+export type Option = {
   name: string
   value: any
 }

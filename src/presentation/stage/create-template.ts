@@ -1,6 +1,8 @@
 import { Markup } from 'telegraf'
 
+import select from './utils/select'
 import confirm from './utils/confirm'
+import * as renderUtils from '../../utils/render'
 import { getTemplateFromContext } from './utils/template'
 import { TemplateService } from '../../services/TemplateService'
 import { TelegramFileService } from '../../services/TelegramFileService'
@@ -46,13 +48,14 @@ export function factory(
       const [rawWidth, rawHeight] = rawDimensions.split('x')
       const width = parseInt(rawWidth, 10)
       const height = parseInt(rawHeight, 10)
-
       ctx.wizard.state.dimensions = { width, height }
-      await ctx.reply(
-        'Got it. Now, please, send the template as a file or a pre-formatted code block (surrounded with three backticks like so: ```template```)'
-      )
-      ctx.wizard.next()
+      return select.promptForOption('Choose a templating engine', renderUtils.ENGINE_OPTIONS, ctx)
     },
+    select.extractSelection(
+      'engine',
+      option =>
+        `Ok, ${option.name} it is, then! Now, please, send the template as a file or a pre-formatted code block (surrounded with three backticks like so: \`\`\`template\`\`\`)`
+    ),
     async (ctx: any) => {
       const usage = () =>
         ctx.reply(
@@ -76,7 +79,7 @@ export function factory(
       const fields = ctx.message.text.split(',').map((s: string) => s.trim())
 
       ctx.wizard.state.fields = fields
-      const { name, dimensions, template } = ctx.wizard.state
+      const { name, dimensions, template, engine } = ctx.wizard.state
 
       const text = [
         "Alreight, that's all I need from you. Let's review the data you just entered, to make sure it's correct\n",
@@ -85,6 +88,7 @@ export function factory(
         `**Height**: ${dimensions.height}`,
         `**Fields**: ${fields.join(', ')}`,
         `**Template**: \n\`\`\`${template.origin === 'text' ? template.template : '<File>'}\`\`\``,
+        `**Templating Engine**: ${engine}`,
         '',
         'Is this correct?'
       ].join('\n')
@@ -99,10 +103,14 @@ export function factory(
         name,
         dimensions,
         template: { template },
-        fields
+        fields,
+        engine
       } = ctx.wizard.state
 
-      await templateService.create({ name, dimensions, template, fields }, ctx.message.from.id)
+      await templateService.create(
+        { name, dimensions, template, fields, engine },
+        ctx.message.from.id
+      )
 
       await ctx.reply('Ok, template created!')
       return ctx.scene.leave()

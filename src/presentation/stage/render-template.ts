@@ -1,8 +1,8 @@
-import Mustache from 'mustache'
 import { chromium } from 'playwright-chromium'
 
 import select from './utils/select'
 import confirm from './utils/confirm'
+import { render } from '../../utils/render'
 import { Template } from '../../domain/Template'
 import { TemplateService } from '../../services/TemplateService'
 
@@ -74,10 +74,10 @@ export function factory(templateService: TemplateService) {
 
       const { template, renderData } = state
 
-      let renderedTemplate
+      let renderedTemplate: string
 
       try {
-        renderedTemplate = Mustache.render(template.template, { ...renderData })
+        renderedTemplate = await render(template, { ...renderData })
       } catch (err) {
         await ctx.reply(`Error while rendering template: ${err.message}`)
         return ctx.scene.leave()
