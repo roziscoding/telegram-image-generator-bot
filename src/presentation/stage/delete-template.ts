@@ -15,7 +15,9 @@ export function factory(templateService: TemplateService) {
       ctx.wizard.state.templates = templates
 
       if (!templates.length) {
-        ctx.reply('You have no templates registered. To create a new one, use the /new command.')
+        ctx.reply(
+          'You have no templates registered\\. To create a new one, use the /new command\\.'
+        )
         return ctx.scene.leave()
       }
 
@@ -42,7 +44,7 @@ export function factory(templateService: TemplateService) {
 
       ctx.wizard.state.template = template
       return confirm.promptConfirmation(
-        `OK, you selected ${template.name}\\. What would you like the event name to be?`
+        `OK, you selected ${template.name}\\\\. Are you sure you want to delete it?`
       )(ctx)
     },
     confirm.onConfirmmed(async (ctx: any) => {

@@ -1,4 +1,4 @@
-import ejs from 'ejs'
+import Mustache from 'mustache'
 import { chromium } from 'playwright-chromium'
 
 import select from './utils/select'
@@ -10,7 +10,7 @@ const WizardScene = require('telegraf/scenes/wizard')
 
 type FinalState = {
   template: Template
-  eventData: Record<string, string>
+  renderData: Record<string, string>
 }
 
 export function factory(templateService: TemplateService) {
@@ -51,7 +51,7 @@ export function factory(templateService: TemplateService) {
 
       const fieldLines = fieldPlusValues.map(([field, value]) => `${field}: ${value}`)
 
-      ctx.wizard.state.eventData = Object.fromEntries(fieldPlusValues)
+      ctx.wizard.state.renderData = Object.fromEntries(fieldPlusValues)
 
       const { template } = ctx.wizard.state
 
@@ -72,18 +72,16 @@ export function factory(templateService: TemplateService) {
 
       const state: FinalState = ctx.wizard.state
 
-      const { template, eventData } = state
+      const { template, renderData } = state
 
       let renderedTemplate
 
       try {
-        renderedTemplate = ejs.render(template.template, { ...eventData })
+        renderedTemplate = Mustache.render(template.template, { ...renderData })
       } catch (err) {
         await ctx.reply(`Error while rendering template: ${err.message}`)
         return ctx.scene.leave()
       }
-
-      let file
 
       try {
         const browser = await chromium.launch({
@@ -93,14 +91,12 @@ export function factory(templateService: TemplateService) {
         const page = await browser.newPage()
         await page.setContent(renderedTemplate)
         await page.setViewportSize(template.dimensions)
-        file = await page.screenshot({ type: 'png' })
+        const file = await page.screenshot({ type: 'png' })
         await browser.close()
+        await ctx.replyWithDocument({ source: file, filename: `${template.name}.png` })
       } catch (err) {
         await ctx.reply(`Error generating image: ${err.message}`)
-        return ctx.scene.leave()
       }
-
-      await ctx.replyWithDocument({ source: file, filename: `${template.name}.png` })
 
       ctx.scene.leave()
     })
