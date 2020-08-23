@@ -13,7 +13,7 @@ export class TemplateService {
     const template: Template = {
       _id: id,
       ...templateData,
-      owners: [ userId ]
+      owners: [userId]
     }
 
     await this.repository.save(template)
