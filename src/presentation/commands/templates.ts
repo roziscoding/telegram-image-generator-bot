@@ -17,11 +17,12 @@ export function factory(templateService: TemplateService) {
           'You currently have no templates. To create a new one, use the /new command'
         )
 
-      const templateLines = templates.map(({ name, dimensions, fields }) =>
+      const templateLines = templates.map(({ name, dimensions, fields, engine }) =>
         [
           `Name: ${name}`,
           `Dimensions: ${dimensions.width}x${dimensions.height}`,
           `Fields: ${fields.join(', ')}`,
+          `Engine: ${engine}`,
           '-------'
         ].join('\n')
       )
