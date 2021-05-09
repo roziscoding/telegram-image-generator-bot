@@ -44,7 +44,7 @@
   "dependencies": {
     "@nindoo/mongodb-data-layer": "^3.0.2",
     "axios": "^0.20.0",
-    "handlebars": "^4.7.6",
+    "handlebars": "^4.7.7",
     "hogan.js": "^3.0.2",
     "mongodb": "^3.6.0",
     "mustache": "^4.0.1",
