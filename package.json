@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@nindoo/mongodb-data-layer": "^3.0.2",
-    "axios": "^0.20.0",
+    "axios": "^0.21.2",
     "handlebars": "^4.7.6",
     "hogan.js": "^3.0.2",
     "mongodb": "^3.6.0",
